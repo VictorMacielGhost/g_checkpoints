@@ -1,6 +1,6 @@
 /*
     * @Author: Victor Ghost Checkpoints (g_checkpoints)
-    * @Version: 0.1 25/08/22 (EU)
+    * @Version: 0.2 26/08/22 (EU)
 
     * @Github: https://github.com/VictorMacielGhost/g_checkpoints
     * @Wiki: https://github.com/VictorMacielGhost/g_checkpoints/wiki 
@@ -12,7 +12,7 @@
     #endinput
 #else
     #define _g_checkpoints_included
-    #define _g_checkpoints_version "0.1"
+    #define _g_checkpoints_version "0.2"
 #endif
 
 #if !defined _samp_included
@@ -22,10 +22,11 @@
 
 // defines
 
-#define     MAX_CHECKPOINTS             (1024)
+#define     MAX_CHECKPOINTS             (G_CP_ID:0x400)
+#define     INVALID_CHECKPOINT_ID       (G_CP_ID:0xFFFF)
 
-#define     CHECKPOINT_TYPE_NORMAL      (0)
-#define     CHECKPOINT_TYPE_RACE        (1)
+#define     CHECKPOINT_TYPE_NORMAL      (G_CP_TYPE:0b0000)
+#define     CHECKPOINT_TYPE_RACE        (G_CP_TYPE:0b0001)
 
 // enums
 
@@ -42,31 +43,31 @@ enum E_CHECKPOINTS_INFO
 };
 
 // Global Variables
-static CheckpointsInfo[MAX_CHECKPOINTS][E_CHECKPOINTS_INFO];
+static CheckpointsInfo[G_CP_ID:MAX_CHECKPOINTS][E_CHECKPOINTS_INFO];
 
 // forwards
 
-forward OnCheckpointCreated(G_CP_ID:checkpointid, G_CP_TYPE:type);
+forward OnCheckpointCreated(G_CP_ID:checkpointid, G_CP_TYPE:type, forplayerid);
 forward OnPlayerEnterGCheckpoint(playerid, G_CP_ID:checkpointid);
 
 // internal functions
 
 static stock G_CP_ID:GetNextCheckpointID()
 {
-    for(new G_CP_ID:i = 0; i < MAX_CHECKPOINTS; i++)
+    for(new G_CP_ID:i; i < MAX_CHECKPOINTS; i++)
     {
         if(!CheckpointsInfo[i][E_CHECKPOINTS_ACTIVE]) return i;
     }
     printf("[Checkpoints]: [ERROR]: Limits of checkpoints reached. Can not return one real id");
-    return -1;
+    return INVALID_CHECKPOINT_ID;
 }
 
-static stock SetCheckpointType(checkpointid, G_CP_TYPE:type)
+static stock SetCheckpointType(G_CP_ID:checkpointid, G_CP_TYPE:type)
 {
     CheckpointsInfo[checkpointid][E_CHECKPOINTS_TYPE] = type;
 }
 
-static stock G_CP_TYPE:GetCheckpointType(checkpointid)
+static stock G_CP_TYPE:GetCheckpointType(G_CP_ID:checkpointid)
 {
     return CheckpointsInfo[checkpointid][E_CHECKPOINT_TYPE];
 }
@@ -89,7 +90,7 @@ stock G_CP_ID:SetPlayerCheckpointEx(playerid, G_CP_TYPE:type, Float:x, Float:y, 
         SetPlayerCheckpoint(playerid, x, y, z, range);
     }
 
-    CallLocalFunction("OnCheckpointCreate", "iii", CheckpointsInfo[checkpointid][E_CHECKPOINTS_ID], CheckpointsInfo[checkpointid][E_CHECKPOINTS_TYPE], CheckpointsInfo[E_CHECKPOINTS_FORPLAYERID]);
+    // CallLocalFunction("OnCheckpointCreate", "iii", checkpointid, type, playerid);
     return CheckpointsInfo[checkpointid][E_CHECKPOINTS_ID];
 }
 
@@ -104,12 +105,12 @@ stock SetMaxCheckpoints(value)
     #define MAX_CHECKPOINTS (value);
 }
 
-stock ToggleCheckpointActive(checkpointid, bool:toggle)
+stock ToggleCheckpointActive(G_CP_ID:checkpointid, bool:toggle)
 {
     CheckpointsInfo[checkpointid][E_CHECKPOINTS_ACTIVE] = toggle;
 }
 
-stock bool:IsCheckpointActive(checkpointid)
+stock bool:IsCheckpointActive(G_CP_ID:checkpointid)
 {
     return CheckpointsInfo[checkpointid][E_CHECKPOINTS_ACTIVE];
 }
